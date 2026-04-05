@@ -317,10 +317,18 @@ export default function App(){
       .fd-sidebar-overlay.show{display:block;}
     }
     @media(max-width:768px){
-      .fd-content{padding:20px;}
+      .fd-content{padding:16px 20px;}
       .fd-topbar{padding:14px 20px;}
       .fd-page-title{font-size:18px;}
       .hide-mobile{display:none;}
+      .fd-table-desktop{display:none;}
+      .fd-mobile-cards{display:flex;flex-direction:column;gap:12px;padding:16px;}
+      .fd-m-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;}
+      .fd-m-card-row{display:flex;justify-content:space-between;align-items:center;}
+      .fd-m-card-label{font-size:12px;color:var(--text-muted);font-weight:600;}
+    }
+    @media(min-width:769px){
+      .fd-mobile-cards{display:none;}
     }
   `;
 
@@ -520,11 +528,13 @@ function DashboardPage({totalIncome,totalExpense,balance,savingsRate,catSpending
       </div>
 
       {/* Recent Transactions */}
-      <div className="fd-card" style={{padding:"0 0 10px 0"}}>
+      <div className="fd-card" style={{padding:0,overflow:"hidden"}}>
         <div style={{padding:"24px 24px 16px"}}>
           <div className="fd-section-title">Latest Transactions</div>
         </div>
-        <div className="fd-table-container">
+        
+        {/* Desktop Table */}
+        <div className="fd-table-container fd-table-desktop">
           <table className="fd-table">
             <thead>
               <tr>
@@ -547,6 +557,24 @@ function DashboardPage({totalIncome,totalExpense,balance,savingsRate,catSpending
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="fd-mobile-cards">
+          {recentTxns.map(t=>(
+            <div key={t.id} className="fd-m-card">
+              <div className="fd-m-card-row">
+                <span style={{fontWeight:700,fontSize:15}}>{t.desc}</span>
+                <span style={{fontWeight:800,color:t.amount>0?"var(--green)":"var(--red)",fontFamily:"'DM Mono',monospace",fontSize:15}}>
+                  {t.amount>0?"+":""}{fmtD(t.amount)}
+                </span>
+              </div>
+              <div className="fd-m-card-row" style={{marginTop:4}}>
+                <span className="fd-tag" style={{background:CAT_COLORS[t.category]+"15",color:CAT_COLORS[t.category],fontSize:11}}>{t.category}</span>
+                <span style={{fontSize:12,color:"var(--text-muted)",fontFamily:"'DM Mono',monospace"}}>{t.date}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -573,46 +601,73 @@ function TransactionsPage({filtered,search,setSearch,filterType,setFilterType,fi
         <span style={{marginLeft:"auto",fontSize:12,color:"var(--text-muted)",fontWeight:600}}>{filtered.length} results</span>
       </div>
 
-      {/* Table */}
+      {/* List Container */}
       <div className="fd-card" style={{padding:0,overflow:"hidden"}}>
         {filtered.length===0?(
           <div className="fd-empty">No transactions match your filters</div>
         ):(
-          <div className="fd-table-container">
-            <table className="fd-table">
-              <thead>
-                <tr>
-                  <th onClick={()=>toggleSort("date")}>Date<SortIcon col="date"/></th>
-                  <th onClick={()=>toggleSort("desc")}>Description<SortIcon col="desc"/></th>
-                  <th>Category</th>
-                  <th>Type</th>
-                  <th onClick={()=>toggleSort("amount")} style={{textAlign:"right"}}>Amount<SortIcon col="amount"/></th>
-                  {isAdmin&&<th style={{textAlign:"right"}}>Actions</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(t=>(
-                  <tr key={t.id}>
-                    <td style={{fontFamily:"'DM Mono',monospace",fontSize:13,color:"var(--text-muted)"}}>{t.date}</td>
-                    <td style={{fontWeight:600}}>{t.desc}</td>
-                    <td><span className="fd-tag" style={{background:CAT_COLORS[t.category]+"15",color:CAT_COLORS[t.category]}}>{t.category}</span></td>
-                    <td><span className="fd-tag" style={{background:t.type==="income"?"var(--green)15":"var(--red)15",color:t.type==="income"?"var(--green)":"var(--red)",textTransform:"capitalize"}}>{t.type}</span></td>
-                    <td style={{textAlign:"right",fontWeight:700,color:t.amount>0?"var(--green)":"var(--red)",fontFamily:"'DM Mono',monospace"}}>
-                      {t.amount>0?"+":""}{fmtD(t.amount)}
-                    </td>
-                    {isAdmin&&(
-                      <td style={{textAlign:"right"}}>
-                        <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
-                          <button className="fd-btn" style={{padding:"6px 12px",fontSize:12,fontWeight:700}} onClick={()=>startEdit(t)}>Edit</button>
-                          <button className="fd-btn danger" style={{padding:"6px 12px",fontSize:12,fontWeight:700}} onClick={()=>deleteTxn(t.id)}>Delete</button>
-                        </div>
-                      </td>
-                    )}
+          <>
+            {/* Desktop Table */}
+            <div className="fd-table-container fd-table-desktop">
+              <table className="fd-table">
+                <thead>
+                  <tr>
+                    <th onClick={()=>toggleSort("date")}>Date<SortIcon col="date"/></th>
+                    <th onClick={()=>toggleSort("desc")}>Description<SortIcon col="desc"/></th>
+                    <th>Category</th>
+                    <th>Type</th>
+                    <th onClick={()=>toggleSort("amount")} style={{textAlign:"right"}}>Amount<SortIcon col="amount"/></th>
+                    {isAdmin&&<th style={{textAlign:"right"}}>Actions</th>}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filtered.map(t=>(
+                    <tr key={t.id}>
+                      <td style={{fontFamily:"'DM Mono',monospace",fontSize:13,color:"var(--text-muted)"}}>{t.date}</td>
+                      <td style={{fontWeight:600}}>{t.desc}</td>
+                      <td><span className="fd-tag" style={{background:CAT_COLORS[t.category]+"15",color:CAT_COLORS[t.category]}}>{t.category}</span></td>
+                      <td><span className="fd-tag" style={{background:t.type==="income"?"var(--green)15":"var(--red)15",color:t.type==="income"?"var(--green)":"var(--red)",textTransform:"capitalize"}}>{t.type}</span></td>
+                      <td style={{textAlign:"right",fontWeight:700,color:t.amount>0?"var(--green)":"var(--red)",fontFamily:"'DM Mono',monospace"}}>
+                        {t.amount>0?"+":""}{fmtD(t.amount)}
+                      </td>
+                      {isAdmin&&(
+                        <td style={{textAlign:"right"}}>
+                          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+                            <button className="fd-btn" style={{padding:"6px 12px",fontSize:12,fontWeight:700}} onClick={()=>startEdit(t)}>Edit</button>
+                            <button className="fd-btn danger" style={{padding:"6px 12px",fontSize:12,fontWeight:700}} onClick={()=>deleteTxn(t.id)}>Delete</button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="fd-mobile-cards">
+              {filtered.map(t=>(
+                <div key={t.id} className="fd-m-card">
+                  <div className="fd-m-card-row">
+                    <span style={{fontWeight:700,fontSize:15}}>{t.desc}</span>
+                    <span style={{fontWeight:800,color:t.amount>0?"var(--green)":"var(--red)",fontFamily:"'DM Mono',monospace",fontSize:15}}>
+                      {t.amount>0?"+":""}{fmtD(t.amount)}
+                    </span>
+                  </div>
+                  <div className="fd-m-card-row" style={{marginTop:2}}>
+                    <span className="fd-tag" style={{background:CAT_COLORS[t.category]+"15",color:CAT_COLORS[t.category],fontSize:11}}>{t.category}</span>
+                    <span style={{fontSize:12,color:"var(--text-muted)",fontFamily:"'DM Mono',monospace"}}>{t.date}</span>
+                  </div>
+                  {isAdmin&&(
+                    <div style={{display:"flex",gap:10,marginTop:10,borderTop:"1px solid var(--border)",paddingTop:10}}>
+                      <button className="fd-btn" style={{flex:1,justifyContent:"center",padding:"8px"}} onClick={()=>startEdit(t)}>Edit</button>
+                      <button className="fd-btn danger" style={{flex:1,justifyContent:"center",padding:"8px"}} onClick={()=>deleteTxn(t.id)}>Delete</button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
